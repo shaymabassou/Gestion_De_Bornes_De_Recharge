@@ -1,0 +1,16 @@
+{
+  "$id": "edit-remote-pricing",
+  "title": "Edit remote pricing",
+  "type": "object",
+  "properties": {
+    "subdomain": {
+      "$ref": "common#/definitions/subdomain"
+    },
+    "Limit": {
+      "$ref": "common#/definitions/limit"
+    },
+    "Skip": {
+      "$ref": "common#/definitions/skip"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+    "$id": "emaid-import-create",
+    "title": "Emaid importation",
+    "type": "object",
+    "properties": {
+    "id": {
+        "$ref": "emaid#/definitions/id"
+    },
+    "description": {
+        "$ref": "emaid#/definitions/description"
+    },
+    "visualID": {
+        "$ref": "emaid#/definitions/visualID"
+    },
+    "siteIDs": {
+        "type": "string",
+        "sanitize": "mongo"
+    },
+    "fromEMSP": {
+        "type": "boolean",
+        "sanitize": "mongo"
+    },
+    "importedData": {
+        "type": "object",
+        "properties": {
+        "autoActivateUserAtImport": {
+            "type": "boolean",
+            "sanitize": "mongo"
+        },
+        "autoActivateTagAtImport": {
+            "type": "boolean",
+            "sanitize": "mongo"
+        }
+        }
+    },
+    "email": {
+        "$ref": "user#/definitions/email"
+    },
+    "name": {
+        "$ref": "user#/definitions/name"
+    },
+    "firstName": {
+        "$ref": "user#/definitions/firstName"
+    }
+    },
+    "required": [
+    "id",
+    "visualID",
+    "description",
+    "fromEMSP"
+    ]
+}
+  

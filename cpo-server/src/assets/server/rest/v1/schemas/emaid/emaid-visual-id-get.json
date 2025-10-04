@@ -1,0 +1,20 @@
+{
+    "$id": "emaid-visual-id-get",
+    "title": "Get a Emaid by visual ID",
+    "type": "object",
+    "properties": {
+    "VisualID": {
+        "$ref": "emaid#/definitions/visualID"
+    },
+    "WithUser": {
+        "type": "boolean",
+        "sanitize": "mongo"
+    },
+    "ProjectFields": {
+        "$ref": "common#/definitions/projectFields"
+    }
+    },
+    "required": [
+    "VisualID"
+    ]
+}

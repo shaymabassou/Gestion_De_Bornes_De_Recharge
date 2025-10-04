@@ -1,0 +1,20 @@
+{
+    "$id": "emaid-assign",
+    "title": "Emaid assignment",
+    "type": "object",
+    "properties": {
+    "visualID": {
+        "$ref": "emaid#/definitions/visualID"
+    },
+    "description": {
+        "$ref": "emaid#/definitions/description"
+    },
+    "userID": {
+        "$ref": "emaid#/definitions/userID"
+    }
+    },
+    "required": [
+    "visualID",
+    "userID"
+    ]
+}

@@ -1,0 +1,24 @@
+{
+    "$id": "certificate-get",
+    "title": "Get a Certificate",
+    "type": "object",
+    "properties": {
+        "ID": {
+            "$ref": "certificate#/definitions/_id",
+            "description": "Unique identifier of the certificate"
+        },
+        "WithUser": {
+            "type": "boolean",
+            "sanitize": "mongo",
+            "description": "Include user information in the response"
+        },
+        "ProjectFields": {
+            "$ref": "common#/definitions/projectFields",
+            "description": "Fields to include in the response"
+        }
+    },
+    "required": [
+        "ID"
+    ],
+    "additionalProperties": false
+}

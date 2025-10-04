@@ -1,0 +1,65 @@
+{
+  "$id": "tenant",
+  "type": "object",
+  "definitions": {
+    "id": {
+      "$ref": "common#/definitions/id"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "sanitize": "mongo"
+    },
+    "email": {
+      "$ref": "common#/definitions/email"
+    },
+    "subdomain": {
+      "$ref": "common#/definitions/subdomain"
+    },
+    "type": {
+      "$ref": "common#/definitions/type"
+    },
+    "parentID": {
+      "$ref": "common#/definitions/id"
+    },
+    "primaryColor": {
+      "$ref": "common#/definitions/primaryColor"
+    },
+    "secondaryColor": {
+      "$ref": "common#/definitions/secondaryColor"
+    },
+    "components": {
+      "$ref": "tenant-components#/definitions/components"
+    },
+    "address": {
+      "$ref": "common#/definitions/address"
+    },
+    "logo": {
+      "$ref": "common#/definitions/logo"
+    },
+    "favicon": {
+      "$ref": "common#/definitions/favicon"
+    },
+    "createdBy": {
+      "$ref": "common#/definitions/createdBy"
+    },
+    "createdOn": {
+      "$ref": "common#/definitions/createdOn"
+    },
+    "lastChangedBy": {
+      "$ref": "common#/definitions/lastChangedBy"
+    },
+    "lastChangedOn": {
+      "$ref": "common#/definitions/lastChangedOn"
+    }
+  },
+  "required": [
+    "name",
+    "email",
+    "subdomain",
+    "type",
+    "primaryColor",
+    "secondaryColor"
+  ]
+}

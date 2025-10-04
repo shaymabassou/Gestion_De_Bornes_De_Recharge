@@ -1,0 +1,17 @@
+{
+  "$id": "ocpi-endpoint-default-set",
+  "title": "OCPI Endpoint update Request",
+  "type": "object",
+  "properties": {
+    "id": {
+      "$ref": "ocpi-endpoint#/definitions/id"
+    },
+    "default":{
+      "$ref": "ocpi-endpoint#/definitions/default"
+    }
+  },
+  "required": [
+    "id",
+    "default"
+  ]
+}

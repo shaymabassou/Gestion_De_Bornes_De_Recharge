@@ -1,0 +1,17 @@
+{
+    "$id": "certificates-delete",
+    "title": "Delete several Certificates",
+    "type": "object",
+    "properties": {
+      "certificatesIDs": {
+        "type": "array",
+        "items": {
+          "$ref": "certificate#/definitions/_id"
+        }
+      }
+    },
+    "required": [
+      "certificatesIDs"
+    ]
+  }
+  

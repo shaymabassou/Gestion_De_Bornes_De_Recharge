@@ -1,0 +1,20 @@
+{
+    "$id": "certificates-by-ids-unassign",
+    "title": "Unassign several Certificates",
+    "type": "object",
+    "properties": {
+        "ids": {
+            "type": "array",
+            "items": {
+                "$ref": "certificate#/definitions/_id",
+                "description": "Unique identifier of a certificate to unassign"
+            },
+            "minItems": 1,
+            "description": "List of certificate identifiers to unassign"
+        }
+    },
+    "required": [
+        "certificatesIDs"
+    ],
+    "additionalProperties": false
+}

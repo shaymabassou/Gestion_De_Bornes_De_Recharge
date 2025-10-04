@@ -1,0 +1,15 @@
+{
+    "$id": "certificate-by-id-unassign",
+    "title": "Unassign Certificate",
+    "type": "object",
+    "properties": {
+        "id": {
+            "$ref": "certificate#/definitions/_id",
+            "description": "Unique identifier of the certificate to unassign"
+        }
+    },
+    "required": [
+        "id"
+    ],
+    "additionalProperties": false
+}

@@ -1,0 +1,24 @@
+{
+    "$id": "emsp-get",
+    "title": "Get list of emsps",
+    "type": "object",
+    "properties": {
+      "Issuer": {
+        "type": "boolean",
+        "sanitize": "mongo"
+      },
+      "Limit": {
+        "$ref": "common#/definitions/limit"
+      },
+      "Skip": {
+        "$ref": "common#/definitions/skip"
+      },
+      "ProjectFields": {
+        "$ref": "common#/definitions/projectFields"
+      }
+    },
+    "required": [
+      "Issuer"
+    ]
+  }
+  

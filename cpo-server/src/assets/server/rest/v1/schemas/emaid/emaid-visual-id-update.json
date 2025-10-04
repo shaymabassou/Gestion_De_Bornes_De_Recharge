@@ -1,0 +1,26 @@
+{
+    "$id": "emaid-visual-id-update",
+    "title": "Update a Emaid",
+    "type": "object",
+    "properties": {
+      "visualID": {
+        "$ref": "emaid#/definitions/visualID"
+      },
+      "description": {
+        "$ref": "emaid#/definitions/description"
+      },
+      "active": {
+        "$ref": "emaid#/definitions/active"
+      },
+      "issuer": {
+        "$ref": "emaid#/definitions/issuer"
+      },
+      "userID": {
+        "$ref": "emaid#/definitions/userID"
+      }
+    },
+    "required": [
+      "visualID"
+    ]
+  }
+  

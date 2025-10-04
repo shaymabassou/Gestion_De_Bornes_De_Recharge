@@ -1,0 +1,51 @@
+{
+  "$id": "tenant-create",
+  "title": "Create one Tenant",
+  "type": "object",
+  "properties": {
+    "id": {
+      "$ref": "tenant#/definitions/id"
+    },
+    "name": {
+      "$ref": "tenant#/definitions/name"
+    },
+    "email": {
+      "$ref": "user#/definitions/email"
+    },
+    "subdomain": {
+      "$ref": "common#/definitions/subdomain"
+    },
+    "type": {
+      "$ref": "common#/definitions/type"
+    },
+    "parentID": {
+      "$ref": "tenant#/definitions/id"
+    },
+    "primaryColor": {
+      "$ref": "common#/definitions/primaryColor"
+    },
+    "secondaryColor": {
+      "$ref": "common#/definitions/secondaryColor"
+    },
+    "logo": {
+      "$ref": "common#/definitions/logo"
+    },
+    "favicon": {
+      "$ref": "common#/definitions/favicon"
+    },
+    "address": {
+      "$ref": "common#/definitions/address"
+    },
+    "components": {
+      "$ref": "tenant-components#/definitions/components"
+    }
+  },
+  "required": [
+    "name",
+    "email",
+    "subdomain",
+    "type",
+    "primaryColor",
+    "secondaryColor"
+  ]
+}

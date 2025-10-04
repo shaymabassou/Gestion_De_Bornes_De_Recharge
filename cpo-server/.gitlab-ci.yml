@@ -1,0 +1,544 @@
+#cache:
+#  untracked: true
+#  key: "$CI_BUILD_REF_NAME"
+#  paths:
+#    - node_modules/
+
+services:
+  - docker:19.03.1-dind
+
+variables:
+  NODE_VERSION: 16
+  DOCKER_HOST: tcp://localhost:2375
+  SERVICE_NAME: "wattzhub_cpo_ev_server_service"
+  NETWORK_NAME: "infra_cpo_web_network"
+  BACK_NETWORK: "ev_network"
+  HOST_NAME: "wattzhub-cpo-server"
+
+
+stages:
+  - setup
+  - build_delivery
+  - sonar-check
+  - deploy
+
+sonarqube-check:
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  stage: sonar-check
+  tags:
+    - debian-docker-runner
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'beta'
+
+
+setup:
+  stage: setup
+  image: debian
+  tags:
+    - debian-docker-runner
+  before_script:
+    - pwd
+    - apt-get update -qq
+    - apt-get install -qq gettext
+    - 'which ssh-agent || ( apt-get install -qq openssh-client )'
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - chmod +x -R ./scripts/
+    - ./scripts/init_jq.sh
+    - echo "$(jq -r .version package.json)" > .pkg_version
+  artifacts:
+    paths:
+      - .pkg_version
+
+build_prod:
+  stage: build_delivery
+  image: docker:stable
+  tags:
+    - docker
+  before_script:
+    - pwd
+    - apk add gettext
+    - chmod +x -R ./scripts/
+    - export ENV=prod
+    - export PACKAGE_VERSION=$(cat .pkg_version)
+    - echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
+    - export BUILD_ENV=dev
+    - docker info
+    - rm docker/config-vars.sh
+    - echo export CRYPTO_KEY=\"${CRYPTO_KEY_PROD}\" >> docker/config-vars.sh
+    - echo export CRYPTO_ALGORITHME=${CRYPTO_ALGORITHME_PROD} >> docker/config-vars.sh
+    - echo export EVDATABASE_URL=${EVDATABASE_URL} >> docker/config-vars.sh
+    - echo export EVDATABASE_KEY=${EVDATABASE_KEY} >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_TYPE=${CENTRAL_SYSTEMS_TYPE_PROD} >> docker/config-vars.sh
+    - echo export SOAP_IMPLEMENTATION=${SOAP_IMPLEMENTATION_PROD} >> docker/config-vars.sh
+    - echo export JSON_IMPLEMENTATION=${JSON_IMPLEMENTATION_PROD} >> docker/config-vars.sh
+    - echo export HTTP_PROTOCOL="${HTTP_PROTOCOL_PROD}" >> docker/config-vars.sh
+    - echo export WS_PROTOCOL="${WS_PROTOCOL_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_SOAP_PORT="${CENTRAL_SYSTEMS_SOAP_PORT_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_JSON_PORT="${CENTRAL_SYSTEMS_JSON_PORT_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_DEBUG="${CENTRAL_SYSTEMS_DEBUG_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_HOST="${CENTRAL_SYSTEMS_HOST_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_REST_PORT="${CENTRAL_SYSTEM_REST_PORT_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_REST_TOKEN="${CENTRAL_SYSTEM_REST_TOKEN_PROD}" >> docker/config-vars.sh
+    - echo export USER_TOKEN_LIFE_TIME="${USER_TOKEN_LIFE_TIME_PROD}" >> docker/config-vars.sh
+    - echo export USER_DEMO_TOKEN_LIFE_TIME_DAYS="${USER_DEMO_TOKEN_LIFE_TIME_DAYS_PROD}" >> docker/config-vars.sh
+    - echo export USER_TECHNICAL_TOKEN_LIFE_TIME_DAYS="${USER_TECHNICAL_TOKEN_LIFE_TIME_DAYS_PROD}" >> docker/config-vars.sh
+    - echo export PASSWORD_WRONG_NUMBER_TRIAL="${PASSWORD_WRONG_NUMBER_TRIAL_PROD}" >> docker/config-vars.sh
+    - echo export PASSWORD_BLOCKED_WAIT_TIME="${PASSWORD_BLOCKED_WAIT_TIME_PROD}" >> docker/config-vars.sh
+    - echo export CAPTCHA_SECRET_KEY="${CAPTCHA_SECRET_KEY_PROD}" >> docker/config-vars.sh
+    - echo export CAPTCHA_SCORE="${CAPTCHA_SCORE_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_FRONT_PORT="${CENTRAL_SYSTEM_FRONT_PORT_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_FRONT_HOST="${CENTRAL_SYSTEM_FRONT_HOST_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_FRONT_PROTOCOL="${CENTRAL_SYSTEM_FRONT_PROTOCOL_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_SERVER_PORT="${CENTRAL_SYSTEM_SERVER_PORT_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_SERVER_HOST="${CENTRAL_SYSTEM_SERVER_HOST_PROD}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_SERVER_PROTOCOL="${CENTRAL_SYSTEM_SERVER_PROTOCOL_PROD}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_PORT="${OCPI_SERVER_PORT_PROD}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_HOST="${OCPI_SERVER_HOST_PROD}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_PROTOCOL="${OCPI_SERVER_PROTOCOL_PROD}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_DEBUG="${OCPI_SERVER_DEBUG_PROD}" >> docker/config-vars.sh
+    - echo export ODATA_PORT="${ODATA_PORT_PROD}" >> docker/config-vars.sh
+    - echo export WSDL_ENDPOINT="${WSDL_ENDPOINT_PROD}" >> docker/config-vars.sh
+    - echo export JSON_ENDPOINT="${JSON_ENDPOINT_PROD}" >> docker/config-vars.sh
+    - echo export OCPI_ENDPOINT="${OCPI_ENDPOINT_PROD}" >> docker/config-vars.sh
+    - echo export STORAGE_IMPLEMENTATION="${STORAGE_IMPLEMENTATION_PROD}" >> docker/config-vars.sh
+    - echo export STORAGE_URI="${STORAGE_URI_PROD}" >> docker/config-vars.sh
+    - echo export STORAGE_HOST="${STORAGE_HOST_PROD}" >> docker/config-vars.sh
+    - echo export STORAGE_PORT="${STORAGE_PORT_PROD}" >> docker/config-vars.sh
+    - echo export STORAGE_USER="${STORAGE_USER_PROD}" >> docker/config-vars.sh
+    - echo export STORAGE_PASSWORD="${STORAGE_PASSWORD_PROD}" >> docker/config-vars.sh
+    - echo export STORAGE_DATABASE="${STORAGE_DATABASE_PROD}" >> docker/config-vars.sh
+    - echo export STORAGE_POOLSIZE="${STORAGE_POOLSIZE_PROD}" >> docker/config-vars.sh
+    - echo export STORAGE_REPLICASET="${STORAGE_REPLICASET_PROD}" >> docker/config-vars.sh
+    - echo export SCHEDULER_ACTIVE="${SCHEDULER_ACTIVE_PROD}" >> docker/config-vars.sh
+    - echo export PERIODIC_BILLING="${PERIODIC_BILLING_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_BACK_UP="${EMAIL_BACK_UP_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_HOST="${EMAIL_HOST_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_FROM="${EMAIL_FROM_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_PORT="${EMAIL_PORT_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_SECURE="${EMAIL_SECURE_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_REQUIRE_TLS="${EMAIL_REQUIRE_TLS_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_USERNAME="${EMAIL_USERNAME_PROD}" >> docker/config-vars.sh
+    - echo export OCPI_PULL_TOKENS_ACTIVE="${OCPI_PULL_TOKENS_ACTIVE_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_PASSWORD="${EMAIL_PASSWORD_PROD}" >> docker/config-vars.sh
+    - echo export PIPELINE_API_URL="${PIPELINE_API_URL_PROD}" >> docker/config-vars.sh
+    - echo export PIPELINE_API_TOKEN="${PIPELINE_API_TOKEN_PROD}" >> docker/config-vars.sh
+    - echo export PIPELINE_API_REF="${PIPELINE_API_REF_PROD}" >> docker/config-vars.sh
+
+  script:
+    - ./scripts/docker_build.sh ${ENV}
+    - docker images
+    - docker login -u${REPOSITORY_USER} -p${REPOSITORY_PASSWORD} ${REPOSITORY_HOST}
+    - docker push ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION}
+  only:
+    - master
+
+
+deploy_prod:
+  stage: deploy
+  image: debian
+  tags:
+    - debian-docker-runner
+  environment:
+    name: prod
+    url: https://cpo.wattzhub.com/
+    on_stop: stop_prod
+  before_script:
+    - pwd
+    - apt-get update -qq
+    - apt-get install -qq gettext
+    - 'which ssh-agent || ( apt-get install -qq openssh-client )'
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    - pwd
+    - ls -la
+    - export ENV=prod
+    - export PACKAGE_VERSION=$(cat .pkg_version)
+    - export "PACKAGE_VERSION=${PACKAGE_VERSION}"
+    - export IMAGE_NAME=${IMAGE_NAME}
+    - export REPOSITORY_USER=${REPOSITORY_USER}
+    - export REPOSITORY_PASSWORD=${REPOSITORY_PASSWORD}
+    - export DOCKER_PORT=${DOCKER_PORT_PROD}
+    - export APP_PORT=${APP_PORT_PROD}
+    - export DOCKER_OCPP_SOAP=${DOCKER_OCPP_SOAP_PROD}
+    - export APP_OCPP_SOAP=${APP_OCPP_SOAP_PROD}
+    - export DOCKER_OCPP_JSON=${DOCKER_OCPP_JSON_PROD}
+    - export APP_OCPP_JSON=${APP_OCPP_JSON_PROD}
+    - export DOCKER_OCPI=${DOCKER_OCPI_PROD}
+    - export APP_OCPI=${APP_OCPI_PROD}
+    - export DOCKER_ODATA=${DOCKER_ODATA_PROD}
+    - export APP_ODATA=${APP_ODATA_PROD}
+    - cat ./docker/sample.docker-compose-server.yml
+    - envsubst < ./docker/sample.docker-compose-server.yml > ./docker/docker-compose-cpo-server.yml
+    - cat ./docker/docker-compose-cpo-server.yml
+  script:
+    - echo root@79.137.68.59 "docker service rm ${SERVICE_NAME}_${ENV} ; docker login -u${REPOSITORY_USER} -p${REPOSITORY_PASSWORD} ${REPOSITORY_HOST} && docker pull ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service create --name ${SERVICE_NAME}_${ENV} --publish ${DOCKER_PORT}:${APP_PORT} --publish ${DOCKER_OCPP_SOAP}:${APP_OCPP_SOAP} --publish ${DOCKER_OCPP_JSON}:${APP_OCPP_JSON} --publish  ${DOCKER_OCPI}:${APP_OCPI} --publish ${DOCKER_ODATA}:${APP_ODATA} --replicas ${REPLICAS_PROD} --network ${NETWORK_NAME} --network ${BACK_NETWORK}   --mount type=volume,source=data_api_${ENV},target=/app/data ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service update ${SERVICE_NAME}_${ENV}"
+    - ssh root@79.137.68.59 "docker service rm ${SERVICE_NAME}_${ENV} ; docker login -u${REPOSITORY_USER} -p${REPOSITORY_PASSWORD} ${REPOSITORY_HOST} && docker pull ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service create --name ${SERVICE_NAME}_${ENV} --publish ${DOCKER_PORT}:${APP_PORT} --publish ${DOCKER_OCPP_SOAP}:${APP_OCPP_SOAP} --publish ${DOCKER_OCPP_JSON}:${APP_OCPP_JSON} --publish  ${DOCKER_OCPI}:${APP_OCPI} --publish ${DOCKER_ODATA}:${APP_ODATA} --replicas ${REPLICAS_PROD} --network ${NETWORK_NAME} --network ${BACK_NETWORK}   --mount type=volume,source=data_api_${ENV},target=/app/data ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service update ${SERVICE_NAME}_${ENV}"
+
+  only:
+    - master
+  when: manual
+
+stop_prod:
+  stage: deploy
+  image: debian
+  tags:
+    - debian-docker-runner
+  type: deploy
+  environment:
+    name: prod
+    action: stop
+  before_script:
+    - export ENV=prod
+    - apt-get update -qq
+    # - apt-get install -qq git
+    - 'which ssh-agent || ( apt-get install -qq openssh-client )'
+    # - apt-get install -qq curl
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo root@79.137.68.59 "docker service rm ${SERVICE_NAME}_${ENV}"
+    - ssh root@79.137.68.59 "docker service rm ${SERVICE_NAME}_${ENV}"
+  only:
+    - master
+  when: manual
+
+build_dev:
+  stage: build_delivery
+  image: docker:stable
+  tags:
+    - docker
+  before_script:
+    - pwd
+    - apk add gettext
+    - chmod +x -R ./scripts/
+    - export ENV=dev
+    - export PACKAGE_VERSION=$(cat .pkg_version)
+    - echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
+    - export BUILD_ENV=dev
+    - docker info
+    - rm docker/config-vars.sh
+    - echo export CRYPTO_KEY=\"${CRYPTO_KEY_DEV}\" >> docker/config-vars.sh
+    - echo export CRYPTO_ALGORITHME=${CRYPTO_ALGORITHME_DEV} >> docker/config-vars.sh
+    - echo export EVDATABASE_URL=${EVDATABASE_URL} >> docker/config-vars.sh
+    - echo export EVDATABASE_KEY=${EVDATABASE_KEY} >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_TYPE=${CENTRAL_SYSTEMS_TYPE_DEV} >> docker/config-vars.sh
+    - echo export SOAP_IMPLEMENTATION=${SOAP_IMPLEMENTATION_DEV} >> docker/config-vars.sh
+    - echo export JSON_IMPLEMENTATION=${JSON_IMPLEMENTATION_DEV} >> docker/config-vars.sh
+    - echo export HTTP_PROTOCOL="${HTTP_PROTOCOL_DEV}" >> docker/config-vars.sh
+    - echo export WS_PROTOCOL="${WS_PROTOCOL_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_SOAP_PORT="${CENTRAL_SYSTEMS_SOAP_PORT_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_JSON_PORT="${CENTRAL_SYSTEMS_JSON_PORT_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_DEBUG="${CENTRAL_SYSTEMS_DEBUG_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_HOST="${CENTRAL_SYSTEMS_HOST_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_REST_PORT="${CENTRAL_SYSTEM_REST_PORT_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_REST_TOKEN="${CENTRAL_SYSTEM_REST_TOKEN_DEV}" >> docker/config-vars.sh
+    - echo export USER_TOKEN_LIFE_TIME="${USER_TOKEN_LIFE_TIME_DEV}" >> docker/config-vars.sh
+    - echo export USER_DEMO_TOKEN_LIFE_TIME_DAYS="${USER_DEMO_TOKEN_LIFE_TIME_DAYS_DEV}" >> docker/config-vars.sh
+    - echo export USER_TECHNICAL_TOKEN_LIFE_TIME_DAYS="${USER_TECHNICAL_TOKEN_LIFE_TIME_DAYS_DEV}" >> docker/config-vars.sh
+    - echo export PASSWORD_WRONG_NUMBER_TRIAL="${PASSWORD_WRONG_NUMBER_TRIAL_DEV}" >> docker/config-vars.sh
+    - echo export PASSWORD_BLOCKED_WAIT_TIME="${PASSWORD_BLOCKED_WAIT_TIME_DEV}" >> docker/config-vars.sh
+    - echo export CAPTCHA_SECRET_KEY="${CAPTCHA_SECRET_KEY_DEV}" >> docker/config-vars.sh
+    - echo export CAPTCHA_SCORE="${CAPTCHA_SCORE_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_FRONT_PORT="${CENTRAL_SYSTEM_FRONT_PORT_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_FRONT_HOST="${CENTRAL_SYSTEM_FRONT_HOST_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_FRONT_PROTOCOL="${CENTRAL_SYSTEM_FRONT_PROTOCOL_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_SERVER_PORT="${CENTRAL_SYSTEM_SERVER_PORT_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_SERVER_HOST="${CENTRAL_SYSTEM_SERVER_HOST_DEV}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_SERVER_PROTOCOL="${CENTRAL_SYSTEM_SERVER_PROTOCOL_DEV}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_PORT="${OCPI_SERVER_PORT_DEV}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_HOST="${OCPI_SERVER_HOST_DEV}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_PROTOCOL="${OCPI_SERVER_PROTOCOL_DEV}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_DEBUG="${OCPI_SERVER_DEBUG_DEV}" >> docker/config-vars.sh
+    - echo export ODATA_PORT="${ODATA_PORT_DEV}" >> docker/config-vars.sh
+    - echo export WSDL_ENDPOINT="${WSDL_ENDPOINT_DEV}" >> docker/config-vars.sh
+    - echo export JSON_ENDPOINT="${JSON_ENDPOINT_DEV}" >> docker/config-vars.sh
+    - echo export OCPI_ENDPOINT="${OCPI_ENDPOINT_DEV}" >> docker/config-vars.sh
+    - echo export STORAGE_IMPLEMENTATION="${STORAGE_IMPLEMENTATION_DEV}" >> docker/config-vars.sh
+    - echo export STORAGE_URI="${STORAGE_URI_DEV}" >> docker/config-vars.sh
+    - echo export STORAGE_HOST="${STORAGE_HOST_DEV}" >> docker/config-vars.sh
+    - echo export STORAGE_PORT="${STORAGE_PORT_DEV}" >> docker/config-vars.sh
+    - echo export STORAGE_USER="${STORAGE_USER_DEV}" >> docker/config-vars.sh
+    - echo export STORAGE_PASSWORD="${STORAGE_PASSWORD_DEV}" >> docker/config-vars.sh
+    - echo export STORAGE_DATABASE="${STORAGE_DATABASE_DEV}" >> docker/config-vars.sh
+    - echo export STORAGE_POOLSIZE="${STORAGE_POOLSIZE_DEV}" >> docker/config-vars.sh
+    - echo export STORAGE_REPLICASET="${STORAGE_REPLICASET_DEV}" >> docker/config-vars.sh
+    - echo export SCHEDULER_ACTIVE="${SCHEDULER_ACTIVE_DEV}" >> docker/config-vars.sh
+    - echo export PERIODIC_BILLING="${PERIODIC_BILLING_DEV}" >> docker/config-vars.sh
+    - echo export EMAIL_BACK_UP="${EMAIL_BACK_UP_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_HOST="${EMAIL_HOST_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_FROM="${EMAIL_FROM_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_PORT="${EMAIL_PORT_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_SECURE="${EMAIL_SECURE_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_REQUIRE_TLS="${EMAIL_REQUIRE_TLS_PROD}" >> docker/config-vars.sh
+    - echo export EMAIL_USERNAME="${EMAIL_USERNAME_PROD}" >> docker/config-vars.sh
+    - echo export OCPI_PULL_TOKENS_ACTIVE="${OCPI_PULL_TOKENS_ACTIVE_DEV}" >> docker/config-vars.sh
+    - echo export EMAIL_PASSWORD="${EMAIL_PASSWORD_PROD}" >> docker/config-vars.sh
+    - echo export PIPELINE_API_URL="${PIPELINE_API_URL_DEV}" >> docker/config-vars.sh
+    - echo export PIPELINE_API_TOKEN="${PIPELINE_API_TOKEN_DEV}" >> docker/config-vars.sh
+    - echo export PIPELINE_API_REF="${PIPELINE_API_REF_DEV}" >> docker/config-vars.sh
+
+  script:
+    - ./scripts/docker_build.sh ${ENV}
+    - docker images
+    - docker login -u${REPOSITORY_USER} -p${REPOSITORY_PASSWORD} ${REPOSITORY_HOST}
+    - docker push ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION}
+  only:
+    - dev
+
+
+deploy_dev:
+  stage: deploy
+  image: debian
+  tags:
+    - debian-docker-runner
+  environment:
+    name: dev
+    url: https://cpo.wattzhub.com/
+    on_stop: stop_dev
+  before_script:
+    - pwd
+    - apt-get update -qq
+    - apt-get install -qq gettext
+    - 'which ssh-agent || ( apt-get install -qq openssh-client )'
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY_DEV")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    - pwd
+    - ls -la
+    - export ENV=dev
+    - export PACKAGE_VERSION=$(cat .pkg_version)
+    - export "PACKAGE_VERSION=${PACKAGE_VERSION}"
+    - export IMAGE_NAME=${IMAGE_NAME}
+    - export REPOSITORY_USER=${REPOSITORY_USER_DEV}
+    - export REPOSITORY_PASSWORD=${REPOSITORY_PASSWORD_DEV}
+    - export DOCKER_PORT=${DOCKER_PORT_DEV}
+    - export APP_PORT=${APP_PORT_DEV}
+    - export DOCKER_OCPP_SOAP=${DOCKER_OCPP_SOAP_DEV}
+    - export APP_OCPP_SOAP=${APP_OCPP_SOAP_DEV}
+    - export DOCKER_OCPP_JSON=${DOCKER_OCPP_JSON_DEV}
+    - export APP_OCPP_JSON=${APP_OCPP_JSON_DEV}
+    - export DOCKER_OCPI=${DOCKER_OCPI_DEV}
+    - export APP_OCPI=${APP_OCPI_DEV}
+    - export DOCKER_ODATA=${DOCKER_ODATA_DEV}
+    - export APP_ODATA=${APP_ODATA_DEV}
+    - cat ./docker/sample.docker-compose-server.yml
+    - envsubst < ./docker/sample.docker-compose-server.yml > ./docker/docker-compose-cpo-server.yml
+    - cat ./docker/docker-compose-cpo-server.yml
+  script:
+    - echo ${USERNAME_DEV}@${HOSTNAME_DEV}"docker service rm ${SERVICE_NAME}_${ENV} ; docker login -u${REPOSITORY_USER_DEV} -p${REPOSITORY_PASSWORD_DEV} ${REPOSITORY_HOST_DEV} && docker pull ${REPOSITORY_HOST_DEV}/${REPOSITORY_USER_DEV}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service create --name ${SERVICE_NAME}_${ENV} --publish ${DOCKER_PORT}:${APP_PORT} --publish ${DOCKER_OCPP_SOAP}:${APP_OCPP_SOAP} --publish ${DOCKER_OCPP_JSON}:${APP_OCPP_JSON} --publish  ${DOCKER_OCPI}:${APP_OCPI} --publish ${DOCKER_ODATA}:${APP_ODATA} --replicas ${REPLICAS_DEV} --network ${NETWORK_NAME} --network ${BACK_NETWORK}   --mount type=volume,source=data_api_${ENV},target=/app/data ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service update ${SERVICE_NAME}_${ENV};  cd ~/maintenance ;chmod +x  ./script_dev.sh ; ./script_dev.sh "
+    - ssh ${USERNAME_DEV}@${HOSTNAME_DEV}  "docker service rm ${SERVICE_NAME}_${ENV} ; docker login -u${REPOSITORY_USER_DEV} -p${REPOSITORY_PASSWORD_DEV} ${REPOSITORY_HOST} && docker pull ${REPOSITORY_HOST_DEV}/${REPOSITORY_USER_DEV}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service create --name ${SERVICE_NAME}_${ENV} --publish ${DOCKER_PORT}:${APP_PORT} --publish ${DOCKER_OCPP_SOAP}:${APP_OCPP_SOAP} --publish ${DOCKER_OCPP_JSON}:${APP_OCPP_JSON} --publish  ${DOCKER_OCPI}:${APP_OCPI} --publish ${DOCKER_ODATA}:${APP_ODATA} --replicas ${REPLICAS_DEV} --network ${NETWORK_NAME} --network ${BACK_NETWORK}   --mount type=volume,source=data_api_${ENV},target=/app/data ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service update ${SERVICE_NAME}_${ENV};  cd ~/maintenance ;chmod +x  ./script_dev.sh ; ./script_dev.sh "
+
+  only:
+    - dev
+  when: manual
+
+stop_dev:
+  stage: deploy
+  image: debian
+  tags:
+    - debian-docker-runner
+  type: deploy
+  environment:
+    name: dev
+    action: stop
+  before_script:
+    - export ENV=dev
+    - apt-get update -qq
+    # - apt-get install -qq git
+    - 'which ssh-agent || ( apt-get install -qq openssh-client )'
+    # - apt-get install -qq curl
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY_DEV")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo ${USERNAME_DEV}@${HOSTNAME_DEV} "docker service rm ${SERVICE_NAME}_${ENV}"
+    - ssh ${USERNAME_DEV}@${HOSTNAME_DEV} "docker service rm ${SERVICE_NAME}_${ENV}"
+  only:
+    - dev
+  when: manual
+
+build_beta:
+  stage: build_delivery
+  image: docker:stable
+  tags:
+    - docker
+  timeout : 2h
+  before_script:
+    - pwd
+    - apk add gettext
+    - chmod +x -R ./scripts/
+    - export ENV=beta
+    - export PACKAGE_VERSION=$(cat .pkg_version)
+    - echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
+    - export BUILD_ENV=dev
+    - docker info
+    - rm docker/config-vars.sh
+    - echo export CRYPTO_KEY=\"${CRYPTO_KEY_BETA}\" >> docker/config-vars.sh
+    - echo export CRYPTO_ALGORITHME=${CRYPTO_ALGORITHME_BETA} >> docker/config-vars.sh
+    - echo export EVDATABASE_URL=${EVDATABASE_URL} >> docker/config-vars.sh
+    - echo export EVDATABASE_KEY=${EVDATABASE_KEY} >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_TYPE=${CENTRAL_SYSTEMS_TYPE_BETA} >> docker/config-vars.sh
+    - echo export SOAP_IMPLEMENTATION=${SOAP_IMPLEMENTATION_BETA} >> docker/config-vars.sh
+    - echo export JSON_IMPLEMENTATION=${JSON_IMPLEMENTATION_BETA} >> docker/config-vars.sh
+    - echo export HTTP_PROTOCOL="${HTTP_PROTOCOL_BETA}" >> docker/config-vars.sh
+    - echo export WS_PROTOCOL="${WS_PROTOCOL_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_SOAP_PORT="${CENTRAL_SYSTEMS_SOAP_PORT_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_JSON_PORT="${CENTRAL_SYSTEMS_JSON_PORT_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_DEBUG="${CENTRAL_SYSTEMS_DEBUG_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEMS_HOST="${CENTRAL_SYSTEMS_HOST_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_REST_PORT="${CENTRAL_SYSTEM_REST_PORT_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_REST_TOKEN="${CENTRAL_SYSTEM_REST_TOKEN_BETA}" >> docker/config-vars.sh
+    - echo export USER_TOKEN_LIFE_TIME="${USER_TOKEN_LIFE_TIME_BETA}" >> docker/config-vars.sh
+    - echo export USER_DEMO_TOKEN_LIFE_TIME_DAYS="${USER_DEMO_TOKEN_LIFE_TIME_DAYS_BETA}" >> docker/config-vars.sh
+    - echo export USER_TECHNICAL_TOKEN_LIFE_TIME_DAYS="${USER_TECHNICAL_TOKEN_LIFE_TIME_DAYS_BETA}" >> docker/config-vars.sh
+    - echo export PASSWORD_WRONG_NUMBER_TRIAL="${PASSWORD_WRONG_NUMBER_TRIAL_BETA}" >> docker/config-vars.sh
+    - echo export PASSWORD_BLOCKED_WAIT_TIME="${PASSWORD_BLOCKED_WAIT_TIME_BETA}" >> docker/config-vars.sh
+    - echo export CAPTCHA_SECRET_KEY="${CAPTCHA_SECRET_KEY_BETA}" >> docker/config-vars.sh
+    - echo export CAPTCHA_SCORE="${CAPTCHA_SCORE_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_FRONT_PORT="${CENTRAL_SYSTEM_FRONT_PORT_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_FRONT_HOST="${CENTRAL_SYSTEM_FRONT_HOST_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_FRONT_PROTOCOL="${CENTRAL_SYSTEM_FRONT_PROTOCOL_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_SERVER_PORT="${CENTRAL_SYSTEM_SERVER_PORT_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_SERVER_HOST="${CENTRAL_SYSTEM_SERVER_HOST_BETA}" >> docker/config-vars.sh
+    - echo export CENTRAL_SYSTEM_SERVER_PROTOCOL="${CENTRAL_SYSTEM_SERVER_PROTOCOL_BETA}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_PORT="${OCPI_SERVER_PORT_BETA}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_HOST="${OCPI_SERVER_HOST_BETA}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_PROTOCOL="${OCPI_SERVER_PROTOCOL_BETA}" >> docker/config-vars.sh
+    - echo export OCPI_SERVER_DEBUG="${OCPI_SERVER_DEBUG_BETA}" >> docker/config-vars.sh
+    - echo export ODATA_PORT="${ODATA_PORT_BETA}" >> docker/config-vars.sh
+    - echo export WSDL_ENDPOINT="${WSDL_ENDPOINT_BETA}" >> docker/config-vars.sh
+    - echo export JSON_ENDPOINT="${JSON_ENDPOINT_BETA}" >> docker/config-vars.sh
+    - echo export OCPI_ENDPOINT="${OCPI_ENDPOINT_BETA}" >> docker/config-vars.sh
+    - echo export STORAGE_IMPLEMENTATION="${STORAGE_IMPLEMENTATION_BETA}" >> docker/config-vars.sh
+    - echo export STORAGE_URI="${STORAGE_URI_BETA}" >> docker/config-vars.sh
+    - echo export STORAGE_HOST="${STORAGE_HOST_BETA}" >> docker/config-vars.sh
+    - echo export STORAGE_PORT="${STORAGE_PORT_BETA}" >> docker/config-vars.sh
+    - echo export STORAGE_USER="${STORAGE_USER_BETA}" >> docker/config-vars.sh
+    - echo export STORAGE_PASSWORD="${STORAGE_PASSWORD_BETA}" >> docker/config-vars.sh
+    - echo export STORAGE_DATABASE="${STORAGE_DATABASE_BETA}" >> docker/config-vars.sh
+    - echo export STORAGE_POOLSIZE="${STORAGE_POOLSIZE_BETA}" >> docker/config-vars.sh
+    - echo export STORAGE_REPLICASET="${STORAGE_REPLICASET_BETA}" >> docker/config-vars.sh
+    - echo export SCHEDULER_ACTIVE="${SCHEDULER_ACTIVE_BETA}" >> docker/config-vars.sh
+    - echo export PERIODIC_BILLING="${PERIODIC_BILLING_BETA}" >> docker/config-vars.sh
+    - echo export EMAIL_BACK_UP="${EMAIL_BACK_UP_BETA}" >> docker/config-vars.sh
+    - echo export EMAIL_HOST="${EMAIL_HOST_BETA}" >> docker/config-vars.sh
+    - echo export EMAIL_FROM="${EMAIL_FROM_BETA}" >> docker/config-vars.sh
+    - echo export EMAIL_PORT="${EMAIL_PORT_BETA}" >> docker/config-vars.sh
+    - echo export EMAIL_SECURE="${EMAIL_SECURE_BETA}" >> docker/config-vars.sh
+    - echo export EMAIL_REQUIRE_TLS="${EMAIL_REQUIRE_TLS_BETA}" >> docker/config-vars.sh
+    - echo export EMAIL_USERNAME="${EMAIL_USERNAME_BETA}" >> docker/config-vars.sh
+    - echo export OCPI_PULL_TOKENS_ACTIVE="${OCPI_PULL_TOKENS_ACTIVE_BETA}" >> docker/config-vars.sh
+    - echo export EMAIL_PASSWORD="${EMAIL_PASSWORD_BETA}" >> docker/config-vars.sh
+    - echo export PIPELINE_API_URL="${PIPELINE_API_URL_BETA}" >> docker/config-vars.sh
+    - echo export PIPELINE_API_TOKEN="${PIPELINE_API_TOKEN_BETA}" >> docker/config-vars.sh
+    - echo export PIPELINE_API_REF="${PIPELINE_API_REF_BETA}" >> docker/config-vars.sh
+    - echo export DATA_GOUV_TOKEN="${DATA_GOUV_TOKEN_BETA}" >> docker/config-vars.sh
+
+  script:
+    - ./scripts/docker_build.sh ${ENV}
+    - docker images
+    - docker login -u${REPOSITORY_USER} -p${REPOSITORY_PASSWORD} ${REPOSITORY_HOST}
+    - docker push ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION}
+  artifacts:
+    paths:
+      - node_modules
+  only:
+    - beta
+
+deploy_beta:
+  stage: deploy
+  image: debian
+  tags:
+    - debian-docker-runner
+  environment:
+    name: beta
+    url: https://cpo.beta.wattzhub.com/
+    on_stop: stop_beta
+  before_script:
+    - pwd
+    - apt-get update -qq
+    - apt-get install -qq gettext
+    - 'which ssh-agent || ( apt-get install -qq openssh-client )'
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    - ssh ${USERNAME_BETA_CPO}@${HOSTNAME_BETA_CPO} "cd ~/maintenance ; chmod +x disable_dispo.sh ; ./disable_dispo.sh"
+    - pwd
+    - ls -la
+    - export ENV=beta
+    - export PACKAGE_VERSION=$(cat .pkg_version)
+    - export "PACKAGE_VERSION=${PACKAGE_VERSION}"
+    - export IMAGE_NAME=${IMAGE_NAME}
+    - export REPOSITORY_USER=${REPOSITORY_USER}
+    - export REPOSITORY_PASSWORD=${REPOSITORY_PASSWORD}
+    - export DOCKER_PORT=${DOCKER_PORT_BETA}
+    - export APP_PORT=${APP_PORT_BETA}
+    - export DOCKER_OCPP_SOAP=${DOCKER_OCPP_SOAP_BETA}
+    - export APP_OCPP_SOAP=${APP_OCPP_SOAP_BETA}
+    - export DOCKER_OCPP_JSON=${DOCKER_OCPP_JSON_BETA}
+    - export APP_OCPP_JSON=${APP_OCPP_JSON_BETA}
+    - export DOCKER_OCPI=${DOCKER_OCPI_BETA}
+    - export APP_OCPI=${APP_OCPI_BETA}
+    - export DOCKER_ODATA=${DOCKER_ODATA_BETA}
+    - export APP_ODATA=${APP_ODATA_BETA}
+    - cat ./docker/sample.docker-compose-server.yml
+    - envsubst < ./docker/sample.docker-compose-server.yml > ./docker/docker-compose-cpo-server.yml
+    - cat ./docker/docker-compose-cpo-server.yml
+  script:
+    - echo ${USERNAME_BETA_CPO}@${HOSTNAME_BETA_CPO} "docker login -u${REPOSITORY_USER} -p${REPOSITORY_PASSWORD} ${REPOSITORY_HOST} && docker pull ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service rm ${SERVICE_NAME}_${ENV} && docker service create --with-registry-auth --name ${SERVICE_NAME}_${ENV} --publish ${DOCKER_PORT}:${APP_PORT} --publish ${DOCKER_OCPP_SOAP}:${APP_OCPP_SOAP} --publish ${DOCKER_OCPP_JSON}:${APP_OCPP_JSON} --publish  ${DOCKER_OCPI}:${APP_OCPI} --publish ${DOCKER_ODATA}:${APP_ODATA} --replicas ${REPLICAS_BETA} --network ${NETWORK_NAME} --network ${BACK_NETWORK} --log-driver json-file --log-opt max-size=100m  --log-opt max-file=3  --mount type=volume,source=data_api_${ENV},target=/app/data ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service update ${SERVICE_NAME}_${ENV}"
+    - ssh ${USERNAME_BETA_CPO}@${HOSTNAME_BETA_CPO} "docker login -u${REPOSITORY_USER} -p${REPOSITORY_PASSWORD} ${REPOSITORY_HOST} && docker pull ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service rm ${SERVICE_NAME}_${ENV} && docker service create --with-registry-auth --name ${SERVICE_NAME}_${ENV} --publish ${DOCKER_PORT}:${APP_PORT} --publish ${DOCKER_OCPP_SOAP}:${APP_OCPP_SOAP} --publish ${DOCKER_OCPP_JSON}:${APP_OCPP_JSON} --publish  ${DOCKER_OCPI}:${APP_OCPI} --publish ${DOCKER_ODATA}:${APP_ODATA} --replicas ${REPLICAS_BETA} --network ${NETWORK_NAME} --network ${BACK_NETWORK} --log-driver json-file --log-opt max-size=100m  --log-opt max-file=3  --mount type=volume,source=data_api_${ENV},target=/app/data ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION} && docker service update ${SERVICE_NAME}_${ENV}; cd ~/maintenance ;chmod +x  ./script.sh ; ./script.sh"
+
+  only:
+    - beta
+  when: manual
+
+stop_beta:
+  stage: deploy
+  image: debian
+  tags:
+    - debian-docker-runner
+  type: deploy
+  environment:
+    name: beta
+    action: stop
+  before_script:
+    - export ENV=beta
+    - apt-get update -qq
+    # - apt-get install -qq git
+    - 'which ssh-agent || ( apt-get install -qq openssh-client )'
+    # - apt-get install -qq curl
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo ${USERNAME_BETA_CPO}@${HOSTNAME_BETA_CPO} "docker service rm ${SERVICE_NAME}_${ENV}"
+    - ssh ${USERNAME_BETA_CPO}@${HOSTNAME_BETA_CPO} "docker service rm ${SERVICE_NAME}_${ENV}"
+  only:
+    - beta
+  when: manual
+
+

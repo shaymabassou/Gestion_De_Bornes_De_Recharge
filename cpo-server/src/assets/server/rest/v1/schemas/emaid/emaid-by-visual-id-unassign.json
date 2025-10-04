@@ -1,0 +1,14 @@
+{
+    "$id": "emaid-by-visual-id-unassign",
+    "title": "Unassign Emaid",
+    "type": "object",
+    "properties": {
+      "visualID": {
+        "$ref": "emaid#/definitions/visualID"
+      }
+    },
+    "required": [
+      "visualID"
+    ]
+  }
+  

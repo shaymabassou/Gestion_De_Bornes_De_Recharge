@@ -1,0 +1,22 @@
+{
+    "$id": "certificates-get",
+    "title": "Get Certificates",
+    "type": "object",
+    "properties": {
+        "Search": { "$ref": "common#/definitions/search" },
+        "CertificateType": {
+            "type": "string",
+            "enum": ["CSMSRootCertificate", "CSMSIntermediateCertificate", "ChargingStationCertificate", "V2GRootCertificate"]
+        },
+        "Status": { "type": "string", "enum": ["ACTIVE", "REVOKED", "EXPIRED"] },
+        "Limit": { "$ref": "common#/definitions/limit" },
+        "Skip": { "$ref": "common#/definitions/skip" },
+        "SortFields": { "$ref": "common#/definitions/sortFields" },
+        "ProjectFields": { "$ref": "common#/definitions/projectFields" },
+        "OnlyRecordCount": { "$ref": "common#/definitions/onlyRecordCount" }
+    },
+    "required": [
+    "Limit"
+    ]
+    
+}

@@ -1,0 +1,32 @@
+{
+    "$id": "emaid-update",
+    "title": "Update a Emaid",
+    "type": "object",
+    "properties": {
+    "id": {
+        "$ref": "emaid#/definitions/id"
+    },
+    "visualID": {
+        "$ref": "emaid#/definitions/visualID"
+    },
+    "description": {
+        "$ref": "emaid#/definitions/description"
+    },
+    "active": {
+        "$ref": "emaid#/definitions/active"
+    },
+
+    "userID": {
+        "$ref": "emaid#/definitions/userID"
+    },
+    "fromEMSP": {
+        "type": "boolean",
+        "sanitize": "mongo"
+      }
+    },
+    "required": [
+      "id",
+      "visualID"
+    ]
+  }
+  

@@ -1,0 +1,14 @@
+{
+  "$id": "tenant-colors-get",
+  "title": "Get one Tenant Colors",
+  "type": "object",
+  "properties": {
+    "ID": {
+      "$ref": "tenant#/definitions/id"
+    },
+    "Subdomain": {
+      "type": "string",
+      "sanitize": "mongo"
+    }
+  }
+}

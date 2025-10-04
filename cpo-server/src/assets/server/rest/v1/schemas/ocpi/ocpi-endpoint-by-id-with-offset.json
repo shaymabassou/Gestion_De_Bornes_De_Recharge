@@ -1,0 +1,19 @@
+{
+  "$id": "ocpi-endpoint-by-id-with-offset",
+  "title": "OCPI Endpoint by id Request",
+  "description": "",
+  "type": "object",
+  "properties": {
+    "id": {
+      "$ref": "ocpi-endpoint#/definitions/id"
+    },
+    "offset": {
+      "type": "number",
+      "sanitize": "mongo"
+    }
+  },
+  "required": [
+    "id",
+    "offset"
+  ]
+}

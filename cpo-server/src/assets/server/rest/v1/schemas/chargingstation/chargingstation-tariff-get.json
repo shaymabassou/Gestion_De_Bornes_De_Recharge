@@ -1,0 +1,21 @@
+{
+    "$id": "chargingstation-tariff-get",
+    "title": "Generate QRCode for Charging Station",
+    "type": "object",
+    "properties": {
+      "ChargingStationID": {
+        "$ref": "chargingstation#/definitions/id"
+      },
+      "ConnectorID": {
+        "$ref": "chargingstation#/definitions/connector/properties/connectorId"
+      },
+      "Roaming":{
+        "type": "boolean",
+        "sanitize": "mongo"
+      }
+    },
+    "required": [
+      "ChargingStationID", "ConnectorID"
+    ]
+  }
+  

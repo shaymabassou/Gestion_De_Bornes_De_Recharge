@@ -1,0 +1,77 @@
+{
+    "$id": "certificate",
+    "definitions": {
+      "id": {
+        "$ref": "common#/definitions/string-id",
+        "sanitize": "mongo"
+      },
+      "certificateChain": {
+        "type": "string",
+        "sanitize": "mongo",
+        "description": "Chaîne de certificats au format PEM"
+      },
+      "hashData": {
+        "type": "object",
+        "properties": {
+          "hashAlgorithm": {
+            "type": "string",
+            "sanitize": "mongo"
+          },
+          "issuerNameHash": {
+            "type": "string",
+            "sanitize": "mongo"
+          },
+          "issuerKeyHash": {
+            "type": "string",
+            "sanitize": "mongo"
+          },
+          "serialNumber": {
+            "type": "string",
+            "sanitize": "mongo"
+          }
+        },
+        "required": ["hashAlgorithm", "issuerNameHash", "issuerKeyHash", "serialNumber"],
+        "additionalProperties": false
+      },
+      "certificateType": {
+        "type": "string",
+        "enum": [
+          "CSMSRootCertificate",
+          "CSMSIntermediateCertificate",
+          "ChargingStationCertificate",
+          "ManufacturerRootCertificate",
+          "ManufacturerIntermediateCertificate"
+        ],
+        "sanitize": "mongo",
+        "description": "Type de certificat (OCPP ou personnalisé)"
+      },
+      "createdAt": {
+        "type": "string",
+        "format": "date-time",
+        "sanitize": "mongo"
+      },
+      "expiresAt": {
+        "type": "string",
+        "format": "date-time",
+        "sanitize": "mongo"
+      },
+      "status": {
+        "type": "string",
+        "enum": ["ACTIVE", "REVOKED", "EXPIRED"],
+        "sanitize": "mongo"
+      },
+      "chargingStationID": {
+        "$ref": "common#/definitions/string-id",
+        "sanitize": "mongo",
+        "optional": true
+      },
+      "tenantID": {
+        "$ref": "common#/definitions/string-id",
+        "sanitize": "mongo"
+      },
+      "companyID": {
+        "$ref": "common#/definitions/string-id",
+        "sanitize": "mongo",
+        "optional": true}
+        }}
+    

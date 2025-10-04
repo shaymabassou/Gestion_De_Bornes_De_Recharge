@@ -1,0 +1,13 @@
+{
+    "$id": "emaid-delete",
+    "title": "Delete a Emaid",
+    "type": "object",
+    "properties": {
+      "ID": {
+        "$ref": "emaid#/definitions/id"
+      }
+    },
+    "required": [
+      "ID"
+    ]
+  }

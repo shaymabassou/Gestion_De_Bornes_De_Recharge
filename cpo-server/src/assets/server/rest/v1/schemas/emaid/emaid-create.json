@@ -1,0 +1,35 @@
+{
+    "$id": "emaid-create",
+    "title": "Emaid creation",
+    "type": "object",
+    "properties": {
+      "id": {
+        "$ref": "emaid#/definitions/id"
+      },
+      "visualID": {
+        "$ref": "emaid#/definitions/visualID"
+      },
+      "description": {
+        "$ref": "emaid#/definitions/description"
+      },
+      "active": {
+        "$ref": "emaid#/definitions/active"
+      },
+      "issuer": {
+        "$ref": "emaid#/definitions/issuer"
+      },
+  
+      "userID": {
+        "$ref": "emaid#/definitions/userID"
+      },
+      "fromEMSP": {
+        "type": "boolean",
+        "sanitize": "mongo"
+      }
+    },
+    "required": [
+      "id",
+      "visualID"
+    ]
+  }
+  

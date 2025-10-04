@@ -1,0 +1,20 @@
+{
+  "$id": "smartchargingbytarif-trigger",
+  "title": "Trigger Smart Charging Request",
+  "type": "object",
+  "properties": {
+    "SiteID": {
+      "$ref": "common#/definitions/id"
+    },
+    "ChargingStationID": {
+      "$ref": "common#/definitions/string-ids"
+    },
+    "ConnectorID": {
+      "$ref": "chargingstation#/definitions/connector/properties/connectorId"
+    }
+  },
+  "required": [
+    "SiteID",
+    "ChargingStationID"
+  ]
+}

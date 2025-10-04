@@ -1,0 +1,29 @@
+version: "3.7"
+services:
+  server:
+    image: ${REPOSITORY_HOST}/${REPOSITORY_USER}/${IMAGE_NAME}:${ENV}-${PACKAGE_VERSION}
+    ports:
+    - ${DOCKER_PORT}:${APP_PORT}
+    - ${DOCKER_OCPP_SOAP}:${APP_OCPP_SOAP}
+    - ${DOCKER_OCPP_JSON}:${APP_OCPP_JSON}
+    - ${DOCKER_OCPI}:${APP_OCPI}
+    - ${DOCKER_ODATA}:${APP_ODATA}
+    external_links:
+    - evse_mongodb_1
+    - evse_mailserver_1
+    environment:
+      WAIT_HOSTS: ev_mongo:27017
+      WAIT_HOSTS_TIMEOUT: 90
+      WAIT_AFTER_HOSTS: 3
+    networks:
+      - ${NETWORK_NAME}
+      - ${BACK_NETWORK}
+    volumes:
+      - data_api_${ENV}:/app/data
+networks:
+  ${NETWORK_NAME}:
+    external: true
+  ${BACK_NETWORK}:
+    external: true
+volumes:
+  data_api_${ENV}:

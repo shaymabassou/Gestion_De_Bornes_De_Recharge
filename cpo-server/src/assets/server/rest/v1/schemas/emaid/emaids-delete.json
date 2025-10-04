@@ -1,0 +1,17 @@
+{
+    "$id": "emaids-delete",
+    "title": "Delete several Emaids",
+    "type": "object",
+    "properties": {
+      "tagsIDs": {
+        "type": "array",
+        "items": {
+          "$ref": "emaid#/definitions/id"
+        }
+      }
+    },
+    "required": [
+      "emaidsIDs"
+    ]
+  }
+  

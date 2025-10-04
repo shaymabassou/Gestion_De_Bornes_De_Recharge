@@ -1,0 +1,13 @@
+{
+  "$id": "certificate-delete",
+  "title": "Delete a Certificate",
+  "type": "object",
+  "properties": {
+      "id": {
+          "$ref": "certificate#/definitions/_id",
+          "description": "Unique identifier of the certificate to delete"
+      }
+  },
+  "required": ["id"],
+  "additionalProperties": false
+}

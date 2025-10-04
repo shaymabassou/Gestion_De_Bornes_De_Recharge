@@ -1,0 +1,319 @@
+{
+  "Crypto": {
+    "key": "${CRYPTO_KEY}",
+    "algorithm": "${CRYPTO_ALGORITHME}"
+  },
+  "EVDatabase": {
+    "url": "${EVDATABASE_URL}",
+    "key": "${EVDATABASE_KEY}"
+  },
+  "CentralSystems": [
+    {
+      "type": "${CENTRAL_SYSTEMS_TYPE}",
+      "implementation": "${JSON_IMPLEMENTATION}",
+      "protocol": "${WS_PROTOCOL}",
+      "host": "${CENTRAL_SYSTEMS_HOST}",
+      "port":  ${CENTRAL_SYSTEMS_JSON_PORT},
+      "debug": ${CENTRAL_SYSTEMS_DEBUG}
+    }
+  ],
+  "CentralSystemRestService": {
+    "protocol": "${HTTP_PROTOCOL}",
+    "host": "${CENTRAL_SYSTEMS_HOST}",
+    "port": ${CENTRAL_SYSTEM_REST_PORT},
+    "userTokenKey": "${CENTRAL_SYSTEM_REST_TOKEN}",
+    "userTokenLifetimeHours": ${USER_TOKEN_LIFE_TIME} ,
+    "userDemoTokenLifetimeDays": ${USER_DEMO_TOKEN_LIFE_TIME_DAYS},
+    "userTechnicalTokenLifetimeDays": ${USER_TECHNICAL_TOKEN_LIFE_TIME_DAYS},
+    "passwordWrongNumberOfTrial": ${PASSWORD_WRONG_NUMBER_TRIAL},
+    "passwordBlockedWaitTimeMin": ${PASSWORD_BLOCKED_WAIT_TIME},
+    "captchaSecretKey": "${CAPTCHA_SECRET_KEY}",
+    "captchaScore": ${CAPTCHA_SCORE},
+    "debug": ${CENTRAL_SYSTEMS_DEBUG}
+  },
+  "CentralSystemFrontEnd": {
+    "protocol": "${CENTRAL_SYSTEM_FRONT_PROTOCOL}",
+    "host": "${CENTRAL_SYSTEM_FRONT_HOST}",
+    "port": ${CENTRAL_SYSTEM_FRONT_PORT}
+  },
+  "CentralSystemServer": {
+    "protocol": "${CENTRAL_SYSTEM_SERVER_PROTOCOL}",
+    "host": "${CENTRAL_SYSTEM_SERVER_HOST}",
+    "port": ${CENTRAL_SYSTEM_SERVER_PORT}
+  },
+  "OCPIService": {
+    "protocol": "${OCPI_SERVER_PROTOCOL}",
+    "host": "${OCPI_SERVER_HOST}",
+    "port": ${OCPI_SERVER_PORT} ,
+    "debug": ${OCPI_SERVER_DEBUG}
+  },
+  "ODataService": {
+    "protocol": "${HTTP_PROTOCOL}",
+    "host": "${CENTRAL_SYSTEMS_HOST}",
+    "port": ${ODATA_PORT},
+    "debug": ${CENTRAL_SYSTEMS_DEBUG}
+  },
+  "WSDLEndpoint": {
+    "baseSecureUrl": "${WSDL_ENDPOINT}"
+  },
+  "JsonEndpoint": {
+    "baseSecureUrl": "${JSON_ENDPOINT}"
+  },
+  "OCPIEndpoint": {
+    "baseUrl": "${OCPI_ENDPOINT}"
+  },
+  "AsyncTask": {
+    "active": true,
+    "nbrTasksInParallel": 4
+  },
+  "Storage": {
+    "implementation": "${STORAGE_IMPLEMENTATION}",
+    "uri": "${STORAGE_URI}",
+    "host": "${STORAGE_HOST}",
+    "port": ${STORAGE_PORT},
+    "user": "${STORAGE_USER}",
+    "password": "${STORAGE_PASSWORD}",
+    "database": "${STORAGE_DATABASE}",
+    "poolSize": ${STORAGE_POOLSIZE},
+    "replicaSet": "${STORAGE_REPLICASET}",
+    "debug":  ${CENTRAL_SYSTEMS_DEBUG}
+  },
+  "Axios": {
+    "retries": 0,
+    "timeoutSecs": 120
+  },
+  "Notification": {
+    "Email": {
+      "enabled": true
+    },
+    "RemotePushNotification": {
+      "enabled": true
+    }
+  },
+  "Email": {
+    "disableBackup": ${EMAIL_BACK_UP},
+    "smtp": {
+      "from": "${EMAIL_FROM}",
+      "host": "${EMAIL_HOST}",
+      "port": ${EMAIL_PORT},
+      "secure": ${EMAIL_SECURE},
+      "requireTLS": ${EMAIL_REQUIRE_TLS},
+      "tls":{
+        "ciphers":"${EMAIL_TLS}"
+      },
+      "user": "${EMAIL_USERNAME}",
+      "password": "${EMAIL_PASSWORD}"
+    },
+    "smtpBackup": {
+      "from": "${EMAIL_FROM}",
+      "host": "${EMAIL_HOST}",
+      "port": ${EMAIL_PORT},
+      "secure": ${EMAIL_SECURE},
+      "requireTLS": ${EMAIL_REQUIRE_TLS},
+      "user": "${EMAIL_USERNAME}",
+      "password": "${EMAIL_PASSWORD}"
+    }
+  },
+  "Authorization": {
+    "debug": false
+  },
+  "ChargingStation": {
+    "heartbeatIntervalOCPPSSecs": 180,
+    "heartbeatIntervalOCPPJSecs": 1800,
+    "pingIntervalOCPPJSecs": 60,
+    "monitoringIntervalOCPPJSecs": 600,
+    "checkEndOfChargeNotificationAfterMin": 5,
+    "notifBeforeEndOfChargePercent": 85,
+    "notifBeforeEndOfChargeEnabled": true,
+    "notifEndOfChargePercent": 0,
+    "notifEndOfChargeEnabled": true,
+    "notifStopTransactionAndUnlockConnector": false,
+    "maxLastSeenIntervalSecs": 540
+  },
+  "Migration": {
+    "active": true
+  },
+  "Scheduler": {
+    "active": ${SCHEDULER_ACTIVE},
+    "tasks": [
+      {
+        "name": "CheckSessionNotStartedAfterAuthorizeTask",
+        "active": true,
+        "periodicity": "*/5 * * * *",
+        "config": {
+          "checkPastAuthorizeMins": 60,
+          "sessionShouldBeStartedAfterMins": 10
+        }
+      },
+      {
+        "name": "SynchronizeBillingUsersTask",
+        "active": false,
+        "periodicity": "0 0 * * *",
+        "config": {}
+      },
+      {
+        "name": "SynchronizeBillingInvoicesTask",
+        "active": false,
+        "periodicity": "0 0 * * *",
+        "config": {}
+      },
+      {
+        "name": "BillingPeriodicOperationTask",
+        "active": ${PERIODIC_BILLING},
+        "periodicity": "0 1 1 * *",
+        "config": {}
+      },
+      {
+        "name": "BillPendingTransactionTask",
+        "active": false,
+        "periodicity": "*/15 * * * *",
+        "config": {}
+      },
+      {
+        "name": "LoggingDatabaseTableCleanupTask",
+        "active": false,
+        "periodicity": "0 0 * * 1",
+        "config": {
+          "retentionPeriodWeeks": 1,
+          "securityRetentionPeriodWeeks": 1
+        }
+      },
+      {
+        "name": "SynchronizeRefundTransactionsTask",
+        "active": false,
+        "periodicity": "0 * * * *",
+        "config": {}
+      },
+      {
+        "name": "CheckPreparingSessionNotStartedTask",
+        "active": false,
+        "periodicity": "0-59/5 * * * *",
+        "config": {
+          "preparingStatusMaxMins": 15
+        }
+      },
+      {
+        "name": "CheckOfflineChargingStationsTask",
+        "active": true,
+        "periodicity": "0-59/5 * * * *",
+        "config": {
+          "offlineChargingStationMins": 5
+        }
+      },
+      {
+        "name": "AssetGetConsumptionTask",
+        "active": true,
+        "periodicity": "* * * * *"
+      },
+      {
+        "name": "CheckUserAccountInactivityTask",
+        "active": false,
+        "periodicity": "0 0 * * 1",
+        "config": {
+          "userAccountInactivityMonths": 6
+        }
+      },
+      {
+        "name": "OCPIPushEVSEStatusesTask",
+        "active": false,
+        "periodicity": "0 1 * * *",
+        "config": {}
+      },
+      {
+        "name": "OCPIPullLocationsTask",
+        "active": false,
+        "periodicity": "*/10 * * * *",
+        "config": {}
+      },
+      {
+        "name": "OCPIPullTokensTask",
+        "active": false,
+        "periodicity": "0 * * * *",
+        "config": {"partial":true}
+      },
+      {
+        "name": "OCPIFullPullTokensTask",
+        "active": false,
+        "periodicity": "0 03 * * 2",
+        "config": {}
+      },
+      {
+        "name": "OCPIPushTokensTask",
+        "active": false,
+        "periodicity": "0 0 1 * *"
+      },
+      {
+        "name": "OCPIPullSessionsTask",
+        "active": false,
+        "periodicity": "0 3 * * *",
+        "config": {}
+      },
+      {
+        "name": "OCPIPullCdrsTask",
+        "active": false,
+        "periodicity": "0 4 * * *",
+        "config": {}
+      },
+      {
+        "name": "SynchronizeCarsTask",
+        "active": false,
+        "periodicity": "0 0 1 * *",
+        "config": {}
+      },
+      {
+        "name": "OCPICheckCdrsTask",
+        "active": false,
+        "periodicity": "*/2 * * * *",
+        "config": {}
+      },
+      {
+        "name": "OCPICheckSessionsTask",
+        "active": false,
+        "periodicity": "*/5 * * * *",
+        "config": {}
+      },
+      {
+        "name": "OCPIPushEVSEStatusesTask",
+        "active": false,
+        "periodicity": "*/5 * * * *",
+        "config": {}
+      },
+      {
+        "name": "OCPIPushCdrsTask",
+        "active": false,
+        "periodicity": "*/5 * * * *",
+        "config": {}
+      },
+      {
+        "name": "BillUnpaidTransactionTask",
+        "active": true,
+        "periodicity": "*/15 * * * *",
+        "config": {}
+      },
+      {
+        "name": "CheckAndComputeSmartChargingTask",
+        "active": true,
+        "periodicity": "* * * * *",
+        "config": {}
+      }
+    ]
+  },
+  "Trace": {
+    "traceIngressHttp": false,
+    "traceEgressHttp": false,
+    "traceOcpp": true,
+    "traceDatabase": false,
+    "traceNotification": false
+  },
+  "Logging": {
+    "logLevel": "D"
+  },
+  "TenantDomain":{
+    "url":"${PIPELINE_API_URL}",
+    "token":"${PIPELINE_API_TOKEN}",
+    "ref":"${PIPELINE_API_REF}"
+  },
+  "DataGouvToken":{
+    "token": "${DATA_GOUV_TOKEN}"
+  }
+}

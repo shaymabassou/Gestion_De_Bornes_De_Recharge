@@ -1,0 +1,16 @@
+{
+    "$id": "emaids-by-visual-ids-unassign",
+    "title": "Unassign several Emaids",
+    "type": "object",
+    "properties": {
+    "visualIDs": {
+        "type": "array",
+        "items": {
+        "$ref": "emaid#/definitions/visualID"
+        }
+    }
+    },
+    "required": [
+    "visualIDs"
+    ]
+}

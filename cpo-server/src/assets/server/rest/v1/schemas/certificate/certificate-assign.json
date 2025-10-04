@@ -1,0 +1,17 @@
+{
+    "$id": "certificate-assign",
+    "title": "Assign a Certificate",
+    "type": "object",
+    "properties": {
+        "id": {
+            "$ref": "certificate#/definitions/_id",
+            "description": "Unique identifier of the certificate"
+        },
+        "chargingStationID": {
+            "$ref": "certificate#/definitions/chargingStationID",
+            "description": "Identifier of the charging station to assign the certificate to (optional)"
+        }
+    },
+    "required": ["id"],
+    "additionalProperties": false
+}
